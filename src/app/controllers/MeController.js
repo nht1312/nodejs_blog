@@ -3,13 +3,23 @@ const { mutipleMongooseToObject } = require('../../util/mongoose');
 class MeController{
     //get /me/stored/courses
     storedCourses(req, res,next){
-        Course.find({})
-            .then(courses => res.render('me/stored-courses', 
-                {
+        let courseQuery = Course.find({})
+        //sap xep
+        if(req.query.hasOwnProperty('_sort')){
+            courseQuery = courseQuery.sort({
+                [req.query.column]: req.query.type
+            })
+        }
+
+        Promise.all([courseQuery,Course.countDocumentsDeleted()])
+            .then(([courses,deleteCount]) => {
+                res.render('me/stored-courses', {
+                    deleteCount,
                     courses: mutipleMongooseToObject(courses)
-                }
-            ))
-            .catch(next)
+                })
+
+            })
+            .catch(next);
     }
     //get /me/trash/courses
     trashCourses(req, res,next){
